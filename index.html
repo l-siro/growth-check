@@ -35,17 +35,85 @@
     margin-top: 1em;
     font-size: 1.4rem;
   }
-  input {
+  input[type="file"] {
     display: block;
     text-align: center;
     margin: 0 auto;
   }
+  .level_Checkbox {
+    max-width: 240px;
+    margin: 0 auto;
+  }
+  .level_CheckboxInput {
+    padding: 12px 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .level_CheckboxInput-Input {
+    margin: 0;
+    width: 0;
+    opacity: 0;
+  }
+  .level_CheckboxInput:hover{
+    background: rgba(0,0,0,.05) !important;
+  }
+  .level_CheckboxInput-Input:focus + .level_CheckboxInput-DummyInput{
+    border: dashed 2px #333333;
+  }
+  .level_CheckboxInput-Input:checked + .level_CheckboxInput-DummyInput {
+    background: #333333;
+  }
+  .level_CheckboxInput-Input:checked + .level_CheckboxInput-DummyInput::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40%;
+    height: 4px;
+    border-radius: 2px;
+    transform: translate(-5px, 2px) rotateZ(-135deg);
+    transform-origin: 2px 2px;
+    background: #FFFFFF;
+  }
+  .level_CheckboxInput-Input:checked + .level_CheckboxInput-DummyInput::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 76%;
+    height: 4px;
+    border-radius: 2px;
+    transform: translate(-5px, 2px) rotateZ(-45deg);
+    transform-origin: 2px 2px;
+    background: #FFFFFF;
+  }
+  .level_CheckboxInput-DummyInput {
+    position: relative;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 24px;
+    height: 24px;
+    border: solid 2px transparent;
+    background: rgba(0,0,0, .1);
+    border-radius: 4px;
+  }
+  .level_CheckboxInput-LabelText {
+    margin-left: 12px;
+    display: block;
+    font-size: 1.4rem;
+    font-weight: bold;
+  }
+
   button {
     display: block;
     text-align: center;
     vertical-align: middle;
     text-decoration: none;
-    width: 150px;
+    width: 240px;
     margin: 2rem auto 1rem;
     padding: .8rem 2rem;
     font-weight: bold;
@@ -86,7 +154,12 @@
 <div class="wrap">
   <input type="file" id="myFile">
   <button onclick="myFunction()">成功技能を抽出</button>
-
+  <div class="level_Checkbox">
+    <label class="level_CheckboxInput"><input id="critical" class="level_CheckboxInput-Input" type="checkbox" checked><span class="level_CheckboxInput-DummyInput"></span><span class="level_CheckboxInput-LabelText">クリティカル成功</span></label>
+    <label class="level_CheckboxInput"><input id="extreme" class="level_CheckboxInput-Input" type="checkbox" checked><span class="level_CheckboxInput-DummyInput"></span><span class="level_CheckboxInput-LabelText">イクストリーム成功</span></label>
+    <label class="level_CheckboxInput"><input id="hard" class="level_CheckboxInput-Input" type="checkbox" checked><span class="level_CheckboxInput-DummyInput"></span><span class="level_CheckboxInput-LabelText">ハード成功</span></label>
+    <label class="level_CheckboxInput"><input id="regular" class="level_CheckboxInput-Input" type="checkbox" checked><span class="level_CheckboxInput-DummyInput"></span><span class="level_CheckboxInput-LabelText">レギュラー成功</span></label>
+  </div>
   <p id="output"></p>
 </div>
 
@@ -95,6 +168,14 @@ function myFunction() {
   var x = document.getElementById("myFile");
   var txt = "";
   var valuesFound = {}; // To keep track of found values per name
+  var skipValues = ["SAN値チェック", "STR", "CON", "POW", "DEX", "APP", "SIZ", "INT", "EDU", "アイデア", "幸運", "知識"]; // Values to skip
+  
+  // Check which success levels to include
+  var includeCritical = document.getElementById("critical").checked;
+  var includeExtreme = document.getElementById("extreme").checked;
+  var includeHard = document.getElementById("hard").checked;
+  var includeRegular = document.getElementById("regular").checked;
+
   if ('files' in x) {
     if (x.files.length == 0) {
       txt = "Select one or more files.";
@@ -116,42 +197,46 @@ function myFunction() {
           for (var i = 0; i < allParagraphs.length; i++) {
             var spans = allParagraphs[i].getElementsByTagName('span');
             for (var j = 0; j < spans.length; j++) {
-              if (spans[j].textContent.includes('成功')) {
+              if (spans[j].textContent.includes('成功') || spans[j].textContent.includes('クリティカル')) {
                 var matchBracket = spans[j].textContent.match(/【(.*?)】/);
                 var ccValueMatch = spans[j].textContent.match(/CC<=([0-9]+)/);
                 if (matchBracket && ccValueMatch && j >= 2) {
                   var name = spans[j-1].textContent.trim();
-                  if (matchBracket[1] !== "SAN値チェック") { // Skip "SAN値チェック"
+                  if (!skipValues.includes(matchBracket[1])) { // Check if the value is in the skip list
                     if (!valuesFound[name]) {
                       valuesFound[name] = [];
                     }
-                    var successLevel = 'レギュラー成功';
-                    if (spans[j].textContent.includes('クリティカル')) {
-                      successLevel = 'クリティカル';
-                    } else if (spans[j].textContent.includes('イクストリーム成功')) {
+                    var successLevel = null;
+                    if (spans[j].textContent.includes('クリティカル') && includeCritical) {
+                      successLevel = 'クリティカル成功';
+                    } else if (spans[j].textContent.includes('イクストリーム成功') && includeExtreme) {
                       successLevel = 'イクストリーム成功';
-                    } else if (spans[j].textContent.includes('ハード成功')) {
+                    } else if (spans[j].textContent.includes('ハード成功') && includeHard) {
                       successLevel = 'ハード成功';
+                    } else if (spans[j].textContent.includes('成功') && includeRegular) {
+                      successLevel = 'レギュラー成功';
                     }
-                    var valueWithSuccess = matchBracket[1] + ' (' + successLevel + ')';
-                    // Roll a 1d100 die
-                    var dieRoll = Math.floor(Math.random() * 100) + 1;
-                    if (dieRoll >= Number(ccValueMatch[1])) {
-                      // Roll a 1d3 die for growth
-                      var growthRoll = Math.floor(Math.random() * 10) + 1;
-                      var growthRoll = '1d10 ＞ <span class="growth-point">' + growthRoll + '</span>'
-                      valueWithSuccess += '<span class="success">成長</span>' + growthRoll;
-                    }
-                    // Check for duplication of the same type of success
-                    var isDuplicate = false;
-                    for (var k = 0; k < valuesFound[name].length; k++) {
-                      if (valuesFound[name][k].startsWith(matchBracket[1] + ' (' + successLevel)) {
-                        isDuplicate = true;
-                        break;
+                    if (successLevel) {  // Only proceed if the success level is included
+                      var valueWithSuccess = matchBracket[1] + ' (' + successLevel + ')';
+                      // Roll a 1d100 die
+                      var dieRoll = Math.floor(Math.random() * 100) + 1;
+                      if (dieRoll >= Number(ccValueMatch[1])) {
+                        // Roll a 1d10 die for growth
+                        var growthRoll = Math.floor(Math.random() * 10) + 1;
+                        var growthRoll = '1d10 ＞ <span class="growth-point">' + growthRoll + '</span>'
+                        valueWithSuccess += '<span class="success">成長</span>' + growthRoll;
                       }
-                    }
-                    if (!isDuplicate) {
-                      valuesFound[name].push(valueWithSuccess);
+                      // Check for duplication of the same type of success
+                      var isDuplicate = false;
+                      for (var k = 0; k < valuesFound[name].length; k++) {
+                        if (valuesFound[name][k].startsWith(matchBracket[1] + ' (' + successLevel)) {
+                          isDuplicate = true;
+                          break;
+                        }
+                      }
+                      if (!isDuplicate) {
+                        valuesFound[name].push(valueWithSuccess);
+                      }
                     }
                   }
                 }
