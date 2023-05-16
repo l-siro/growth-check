@@ -2,10 +2,93 @@
 <html>
 <body>
 
-<input type="file" id="myFile">
-<button onclick="myFunction()">Submit</button>
+<link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    font-size: 10px;
+  }
+  body {    
+    background: #fcfcfc;
+    color: #555;
+    height: 100vh;
+  }
+  .wrap {
+    padding: 20px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1.2rem;
+  }
+  .section {
+    padding: 30px;
+    margin-top: 30px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.1);
+  }
+  .ttl {
+    font-size: 2rem;
+  }
+  .skill {
+    margin-top: 1em;
+    font-size: 1.4rem;
+  }
+  input {
+    display: block;
+    text-align: center;
+    margin: 0 auto;
+  }
+  button {
+    display: block;
+    text-align: center;
+    vertical-align: middle;
+    text-decoration: none;
+    width: 150px;
+    margin: 2rem auto 1rem;
+    padding: .8rem 2rem;
+    font-weight: bold;
+    border: 2px solid #27acd9;
+    color: #27acd9;
+    border-radius: 100vh;
+    transition: 0.5s;
+  }
+  button:hover {
+    color: #fff;
+    background: #27acd9;
+  }
+  #output {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  #output .skill div {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+  }
+  .success,
+  .growth-point {
+    display: inline-block;
+    margin: 0 1.5em;
+    color: #fff;
+    background: #27acd9;
+    padding: 2px 1em 3px;
+    border-radius: 5px;
+    font-size: 1.2rem;
+  }
+  .growth-point {
+    margin: 0;
+  }
 
-<p id="demo"></p>
+</style>
+
+<div class="wrap">
+  <input type="file" id="myFile">
+  <button onclick="myFunction()">成功技能を抽出</button>
+
+  <p id="output"></p>
+</div>
 
 <script>
 function myFunction() {
@@ -35,13 +118,41 @@ function myFunction() {
             for (var j = 0; j < spans.length; j++) {
               if (spans[j].textContent.includes('成功')) {
                 var matchBracket = spans[j].textContent.match(/【(.*?)】/);
-                if (matchBracket && j >= 2) {
+                var ccValueMatch = spans[j].textContent.match(/CC<=([0-9]+)/);
+                if (matchBracket && ccValueMatch && j >= 2) {
                   var name = spans[j-1].textContent.trim();
-                  if (!valuesFound[name]) {
-                    valuesFound[name] = [];
-                  }
-                  if (!valuesFound[name].includes(matchBracket[1])) {
-                    valuesFound[name].push(matchBracket[1]);
+                  if (matchBracket[1] !== "SAN値チェック") { // Skip "SAN値チェック"
+                    if (!valuesFound[name]) {
+                      valuesFound[name] = [];
+                    }
+                    var successLevel = 'レギュラー成功';
+                    if (spans[j].textContent.includes('クリティカル')) {
+                      successLevel = 'クリティカル';
+                    } else if (spans[j].textContent.includes('イクストリーム成功')) {
+                      successLevel = 'イクストリーム成功';
+                    } else if (spans[j].textContent.includes('ハード成功')) {
+                      successLevel = 'ハード成功';
+                    }
+                    var valueWithSuccess = matchBracket[1] + ' (' + successLevel + ')';
+                    // Roll a 1d100 die
+                    var dieRoll = Math.floor(Math.random() * 100) + 1;
+                    if (dieRoll <= Number(ccValueMatch[1])) {
+                      // Roll a 1d3 die for growth
+                      var growthRoll = Math.floor(Math.random() * 10) + 1;
+                      var growthRoll = '1d10 ＞ <span class="growth-point">' + growthRoll + '</span>'
+                      valueWithSuccess += '<span class="success">成長</span>' + growthRoll;
+                    }
+                    // Check for duplication of the same type of success
+                    var isDuplicate = false;
+                    for (var k = 0; k < valuesFound[name].length; k++) {
+                      if (valuesFound[name][k].startsWith(matchBracket[1] + ' (' + successLevel)) {
+                        isDuplicate = true;
+                        break;
+                      }
+                    }
+                    if (!isDuplicate) {
+                      valuesFound[name].push(valueWithSuccess);
+                    }
                   }
                 }
               }
@@ -49,9 +160,9 @@ function myFunction() {
           }
           // Output the results in the desired format
           for (var name in valuesFound) {
-            txt += 'Name: ' + name + ', Found values: ' + valuesFound[name].join(', ') + '<br>';
+            txt += '<div class="section"><h2 class="ttl">' + name + '</h2><div class="skill">' + valuesFound[name].map(item => `<div>${item}</div>`).join('') + '</div></div>';
           }
-          document.getElementById("demo").innerHTML = txt;
+          document.getElementById("output").innerHTML = txt;
         }
         reader.readAsText(file);
       }
