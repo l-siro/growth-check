@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<input type="file" id="myFile">
+<button onclick="myFunction()">Submit</button>
+
+<p id="demo"></p>
+
+<script>
+function myFunction() {
+  var x = document.getElementById("myFile");
+  var txt = "";
+  var valuesFound = {}; // To keep track of found values per name
+  if ('files' in x) {
+    if (x.files.length == 0) {
+      txt = "Select one or more files.";
+    } else {
+      for (var i = 0; i < x.files.length; i++) {
+        var file = x.files[i];
+        if ('name' in file) {
+          txt += "name: " + file.name + "<br>";
+        }
+        if ('size' in file) {
+          txt += "size: " + file.size + " bytes <br>";
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var contents = e.target.result;
+          var parser = new DOMParser();
+          var doc = parser.parseFromString(contents, "text/html");
+          var allParagraphs = doc.getElementsByTagName('p');
+          for (var i = 0; i < allParagraphs.length; i++) {
+            var spans = allParagraphs[i].getElementsByTagName('span');
+            for (var j = 0; j < spans.length; j++) {
+              if (spans[j].textContent.includes('成功')) {
+                var matchBracket = spans[j].textContent.match(/【(.*?)】/);
+                if (matchBracket && j >= 2) {
+                  var name = spans[j-1].textContent.trim();
+                  if (!valuesFound[name]) {
+                    valuesFound[name] = [];
+                  }
+                  if (!valuesFound[name].includes(matchBracket[1])) {
+                    valuesFound[name].push(matchBracket[1]);
+                  }
+                }
+              }
+            }
+          }
+          // Output the results in the desired format
+          for (var name in valuesFound) {
+            txt += 'Name: ' + name + ', Found values: ' + valuesFound[name].join(', ') + '<br>';
+          }
+          document.getElementById("demo").innerHTML = txt;
+        }
+        reader.readAsText(file);
+      }
+    }
+  } 
+  else {
+    if (x.value == "") {
+      txt += "Select one or more files.";
+    } else {
+      txt += "The files property is not supported by your browser!";
+      txt  += "<br>The path of the selected file: " + x.value; 
+    }
+  }
+}
+</script>
+
+</body>
+</html>
