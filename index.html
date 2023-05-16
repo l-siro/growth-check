@@ -136,7 +136,7 @@ function myFunction() {
                     var valueWithSuccess = matchBracket[1] + ' (' + successLevel + ')';
                     // Roll a 1d100 die
                     var dieRoll = Math.floor(Math.random() * 100) + 1;
-                    if (dieRoll <= Number(ccValueMatch[1])) {
+                    if (dieRoll >= Number(ccValueMatch[1])) {
                       // Roll a 1d3 die for growth
                       var growthRoll = Math.floor(Math.random() * 10) + 1;
                       var growthRoll = '1d10 ＞ <span class="growth-point">' + growthRoll + '</span>'
