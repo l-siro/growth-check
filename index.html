@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <body>
-<title>成長判定するやつ</title>
+<title>成長判定するやつv1.2</title>
 <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -215,7 +215,7 @@ function myFunction() {
             for (var j = 0; j < spans.length; j++) {
               if (spans[j].textContent.includes('成功') || spans[j].textContent.includes('クリティカル')) {
                 var matchBracket = spans[j].textContent.match(/【(.*?)】/);
-                var ccValueMatch = spans[j].textContent.match(/CC<=([0-9]+)/);
+                var ccValueMatch = spans[j].textContent.match(/CC[+-]?(?:\([+-]?[12]\))?<=([0-9]+)/);
                 if (matchBracket && ccValueMatch && j >= 2) {
                   var name = spans[j-1].textContent.trim();
                   if (!skipValues.includes(matchBracket[1])) { // Check if the value is in the skip list
