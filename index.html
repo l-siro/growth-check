@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <body>
-<title>成長判定するやつv1.2</title>
+<title>成長判定するやつv1.3</title>
 <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -215,7 +215,7 @@ function myFunction() {
             for (var j = 0; j < spans.length; j++) {
               if (spans[j].textContent.includes('成功') || spans[j].textContent.includes('クリティカル')) {
                 var matchBracket = spans[j].textContent.match(/【(.*?)】/);
-                var ccValueMatch = spans[j].textContent.match(/CC[+-]?(?:\([+-]?[12]\))?<=([0-9]+)/);
+                var ccValueMatch = spans[j].textContent.match(/CC([+-]?[0-9]*)(?:\([+-]?[0-9]*\))?<=([0-9]+)/);
                 if (matchBracket && ccValueMatch && j >= 2) {
                   var name = spans[j-1].textContent.trim();
                   if (!skipValues.includes(matchBracket[1])) { // Check if the value is in the skip list
@@ -233,7 +233,9 @@ function myFunction() {
                       successLevel = 'レギュラー成功';
                     }
                     if (successLevel) {  // Only proceed if the success level is included
-                      var valueWithSuccess = matchBracket[1] + ' ' + ccValueMatch[0];
+                      var valueWithSuccess = matchBracket[1] + ' ' + 'CC' + (ccValueMatch[1] ? ccValueMatch[1] : '') + '<=' + ccValueMatch[2];
+                      var ccValue = ccValueMatch[2];
+
                       // Check for duplication of the same type of success
                       if (!valuesFound[name][valueWithSuccess]) {
                         valuesFound[name][valueWithSuccess] = [];
@@ -255,10 +257,10 @@ function myFunction() {
               var cc = value.split(' ')[1];
               // Roll a 1d100 die
               var dieRoll = Math.floor(Math.random() * 100) + 1;
-              var ccValue = value.match(/CC<=([0-9]+)/)[1];
+              var ccValue = ccValueMatch[2];
               if (dieRoll >= Number(ccValue)) {
                 // Roll a 1d3 die for growth
-                var growthRoll = Math.floor(Math.random() * 10) + 1;
+                var growthRoll = Math.floor(Math.random() * 3) + 1;
                 txt += '<div><span class="skill-ttl">' + skill + '</span>' + cc + '(' + valuesFound[name][value].join(', ')+ ')' + '<span class="success">成長</span>' + '1d10 ＞ <span class="growth-point">' + growthRoll + '</span></div>';
               } else {
                 txt += '<div><span class="skill-ttl">' + skill + '</span>' + cc + '(' + valuesFound[name][value].join(', ')+ ')' + '</div>';
@@ -281,6 +283,7 @@ function myFunction() {
     }
   }
 }
+
 </script>
 
 </body>
